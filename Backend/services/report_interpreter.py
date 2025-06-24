@@ -1,10 +1,19 @@
-import pytesseract
-from PIL import Image
-import fitz  # PyMuPDF
+import os
+from dotenv import load_dotenv
 import google.generativeai as genai
+import fitz  # PyMuPDF for PDF processing
 
-# Replace this in production with a secure loading method (env vars)
-API_KEY = "AIzaSyAItZBq7-0L6LSJBFk3c04a26YEvs4NCNY"
+# Load variables from the .env file into the environment
+load_dotenv()
+
+# Securely fetch the API key
+API_KEY = os.getenv("GEMINI_API_KEY")
+
+# Validate presence
+if not API_KEY:
+    raise ValueError("GEMINI_API_KEY is not set in the environment.")
+
+# Use the API key to configure Gemini
 genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel("models/gemini-1.5-flash")
 

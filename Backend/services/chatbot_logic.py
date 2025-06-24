@@ -1,12 +1,21 @@
-# services/chatbot_logic.py
-
+import os
+from dotenv import load_dotenv
 import google.generativeai as genai
 
 # ========== CONFIGURATION ==========
-API_KEY = "AIzaSyAItZBq7-0L6LSJBFk3c04a26YEvs4NCNY"  # Use env var in prod
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Fetch API key securely
+API_KEY = os.getenv("GEMINI_API_KEY")
+if not API_KEY:
+    raise ValueError("GEMINI_API_KEY is not set in the environment.")
+
+# Configure Gemini client
 genai.configure(api_key=API_KEY)
 
-# Create chat session
+# Initialize the model and start a chat session
 model = genai.GenerativeModel("models/gemini-1.5-flash")
 chat = model.start_chat(history=[])
 

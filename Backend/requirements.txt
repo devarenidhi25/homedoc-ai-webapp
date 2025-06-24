@@ -5,3 +5,4 @@ pillow
 pytesseract
 PyMuPDF
 google-generativeai
+python-dotenv
