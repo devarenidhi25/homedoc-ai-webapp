@@ -27,7 +27,7 @@
 - Three.js *(for visual interactions)*  
 - EmailJS *(contact form integration)*
 
-### ⚙️ Backend *(Planned for integration)*
+### ⚙️ Backend
 - FastAPI (Python)
 - Scikit-learn (KNN, LabelEncoder, MultiLabelBinarizer)
 - PyTesseract + Pillow + PyMuPDF (OCR & PDF parsing)
