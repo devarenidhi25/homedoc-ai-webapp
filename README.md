@@ -96,7 +96,7 @@ Follow the steps below to set up and run **HomeDoc AI** on your local machine.
 ### 📁 Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/homedoc-ai.git
+git clone https://github.com/yourusername/homedoc-ai-webapp.git
 cd homedoc-ai
 ```
 ---
