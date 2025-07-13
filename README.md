@@ -47,10 +47,10 @@
 
 ## 👥 Contributions
 
-| Contributor       | Role & Responsibility                                               |
-|------------------|---------------------------------------------------------------------|
-| **Nidhi Devare** | Frontend development, Firebase Auth, chatbot UI, EmailJS integration |
-| **Aryan Wankhade** | Backend development, OCR, ML model setup, Gemini API integration |
+| Contributor        | Role & Responsibility                                                                 |
+|--------------------|----------------------------------------------------------------------------------------|
+| **Nidhi Devare**   | Frontend development (React, Three.js), Firebase Auth, chatbot UI, frontend-backend integration, deployment |
+| **Aryan Wankhade** | Backend API (FastAPI), OCR handling, ML model training (KNN), Gemini API integration, dataset selection |
 
 ---
 
