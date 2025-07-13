@@ -110,7 +110,7 @@ npm start
 ```
 ---
 
-### Backend Setup
+### ⚙️ Backend Setup
 ```bash
 cd Backend
 pip install -r requirements.txt
