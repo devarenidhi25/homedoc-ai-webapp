@@ -41,7 +41,7 @@
 
 ## 🗃️ Dataset Used
 
-- [🧪 Kaggle – Disease and Symptoms Dataset](https://www.kaggle.com/datasets/dhivyeshrk/diseases-and-symptoms-dataset)
+[🧪 Kaggle – Disease and Symptoms Dataset](https://www.kaggle.com/datasets/dhivyeshrk/diseases-and-symptoms-dataset)
 
 ---
 
@@ -97,7 +97,7 @@ Follow the steps below to set up and run **HomeDoc AI** on your local machine.
 
 ```bash
 git clone https://github.com/yourusername/homedoc-ai-webapp.git
-cd homedoc-ai
+cd homedoc-ai-webapp
 ```
 ---
 
