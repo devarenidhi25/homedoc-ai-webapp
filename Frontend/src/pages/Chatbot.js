@@ -35,6 +35,61 @@ const Chatbot = () => {
 
     loadVoices();
   }, []);
+  
+  const speakText = (text) => {
+    const speak = (lang, preferredNames) => {
+      if (utteranceRef.current) window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = lang;
+      const selectedVoice = availableVoices.find(v =>
+        v.lang === lang && preferredNames.some(name => v.name.toLowerCase().includes(name.toLowerCase()))
+      ) || availableVoices.find(v => v.lang === lang && v.name.toLowerCase().includes("female")) || availableVoices.find(v => v.lang === lang);
+      if (selectedVoice) utterance.voice = selectedVoice;
+      utteranceRef.current = utterance;
+      window.speechSynthesis.speak(utterance);
+    };
+
+    const voiceMap = [
+      { regex: /[a-zA-Z]/, lang: "en-IN", names: ["Google UK English Female", "Google US English", "female"] },
+      { regex: /[ऀ-ॿ]/, lang: "hi-IN", names: ["Google हिन्दी", "Microsoft Kalpana", "female"] },
+      { regex: /[ऀ-ॿ]/, lang: "mr-IN", names: ["Google मराठी", "female"] },
+      { regex: /[਀-੿]/, lang: "pa-IN", names: ["Google ਪੰਜਾਬੀ", "female"] },
+      { regex: /[ঀ-৿]/, lang: "bn-IN", names: ["Google বাংলা", "female"] },
+      { regex: /[஀-௿]/, lang: "ta-IN", names: ["Google தமிழ்", "female"] },
+      { regex: /[ఀ-౿]/, lang: "te-IN", names: ["Google తెలుగు", "female"] },
+      { regex: /[ഀ-ൿ]/, lang: "ml-IN", names: ["Google മലയാളം", "female"] },
+      { regex: /[ಀ-೿]/, lang: "kn-IN", names: ["Google ಕನ್ನಡ", "female"] },
+      { regex: /[઀-૿]/, lang: "gu-IN", names: ["Google ગુજરાતી", "female"] },
+      { regex: /[ঀ-৿]/, lang: "as-IN", names: ["Google অসমীয়া", "female"] },
+    ];
+
+    let matched = false;
+    for (const { regex, lang, names } of voiceMap) {
+      if (regex.test(text)) {
+        speak(lang, names);
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) {
+      const femaleEnglishVoices = availableVoices.filter(
+        v =>
+          v.lang.startsWith("en") &&
+          (v.name.toLowerCase().includes("female") ||
+          v.name.toLowerCase().includes("zira") ||   // Microsoft female
+          v.name.toLowerCase().includes("aria") ||   // Microsoft AI female
+          v.name.toLowerCase().includes("susan") ||  // Possible names
+          v.name.toLowerCase().includes("emma") ||   // UK English female
+          v.name.toLowerCase().includes("google uk english female") ||
+          v.name.toLowerCase().includes("google us english")
+          )
+      );
+
+      const fallbackVoiceNames = femaleEnglishVoices.map(v => v.name);
+      speak("en-IN", fallbackVoiceNames.length ? fallbackVoiceNames : ["female"]);
+    }
+
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })
@@ -194,59 +249,6 @@ const Chatbot = () => {
     }
   }
 
-  const speakText = (text) => {
-    const speak = (lang, preferredNames) => {
-      if (utteranceRef.current) {
-        window.speechSynthesis.cancel();
-      }
-
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = lang;
-
-      const selectedVoice =
-        availableVoices.find(
-          (v) => v.lang === lang && preferredNames.some(name => v.name.includes(name))
-        ) ||
-        availableVoices.find((v) => v.lang === lang) ||
-        availableVoices[0];
-
-      if (selectedVoice) {
-        utterance.voice = selectedVoice;
-      }
-
-      utteranceRef.current = utterance;
-      window.speechSynthesis.speak(utterance);
-    };
-
-    const devanagariRegex = /[\u0900-\u097F]/;
-    const isIndic = devanagariRegex.test(text);
-
-    let lang = "en-US";
-    let preferredVoiceNames = ["Google US English"];
-
-    if (isIndic) {
-      lang = "hi-IN";
-      preferredVoiceNames = ["Google हिन्दी", "Google Hindi", "Microsoft Hemant"];
-    }
-
-    if (availableVoices.length === 0) {
-      const loadAndSpeak = () => {
-        const voices = window.speechSynthesis.getVoices();
-        if (voices.length > 0) {
-          setAvailableVoices(voices);
-          speak(lang, preferredVoiceNames);
-        } else {
-          setTimeout(loadAndSpeak, 100);
-        }
-      };
-
-      const dummy = new SpeechSynthesisUtterance("");
-      window.speechSynthesis.speak(dummy);
-      loadAndSpeak();
-    } else {
-      speak(lang, preferredVoiceNames);
-    }
-  };
 
   const pauseSpeech = () => {
     if (window.speechSynthesis.speaking) {
