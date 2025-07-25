@@ -26,41 +26,61 @@ const Chatbot = () => {
   useEffect(() => {
     const loadVoices = () => {
       const voices = window.speechSynthesis.getVoices();
-      setAvailableVoices(voices);
+      if (voices.length > 0) {
+        console.log("✅ Loaded voices:");
+        voices.forEach(v => {
+          console.log(`${v.name} | ${v.lang}`);
+        });
+        setAvailableVoices(voices);
+      } else {
+        // Retry after short delay if voices not ready yet
+        setTimeout(loadVoices, 200);
+      }
     };
 
-    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+    if (typeof window !== "undefined" && window.speechSynthesis) {
       window.speechSynthesis.onvoiceschanged = loadVoices;
+      loadVoices();
     }
-
-    loadVoices();
   }, []);
+
   
   const speakText = (text) => {
     const speak = (lang, preferredNames) => {
       if (utteranceRef.current) window.speechSynthesis.cancel();
+
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = lang;
-      const selectedVoice = availableVoices.find(v =>
-        v.lang === lang && preferredNames.some(name => v.name.toLowerCase().includes(name.toLowerCase()))
-      ) || availableVoices.find(v => v.lang === lang && v.name.toLowerCase().includes("female")) || availableVoices.find(v => v.lang === lang);
-      if (selectedVoice) utterance.voice = selectedVoice;
+
+      const voice =
+        preferredNames
+          .map(name =>
+            availableVoices.find(
+              v =>
+                v.lang === lang &&
+                v.name.toLowerCase().includes(name.toLowerCase())
+            )
+          )
+          .find(Boolean) ||
+        availableVoices.find(v => v.lang === lang && v.name.toLowerCase().includes("female")) ||
+        availableVoices.find(v => v.lang === lang);
+
+      if (voice) {
+        utterance.voice = voice;
+        console.log("✅ Selected voice:", voice.name, voice.lang);
+      } else {
+        console.warn("⚠️ No matching voice found for", lang);
+      }
+
       utteranceRef.current = utterance;
       window.speechSynthesis.speak(utterance);
     };
 
+    // Voice map
     const voiceMap = [
-      { regex: /[a-zA-Z]/, lang: "en-IN", names: ["Google UK English Female", "Google US English", "female"] },
-      { regex: /[ऀ-ॿ]/, lang: "hi-IN", names: ["Google हिन्दी", "Microsoft Kalpana", "female"] },
-      { regex: /[ऀ-ॿ]/, lang: "mr-IN", names: ["Google मराठी", "female"] },
-      { regex: /[਀-੿]/, lang: "pa-IN", names: ["Google ਪੰਜਾਬੀ", "female"] },
-      { regex: /[ঀ-৿]/, lang: "bn-IN", names: ["Google বাংলা", "female"] },
-      { regex: /[஀-௿]/, lang: "ta-IN", names: ["Google தமிழ்", "female"] },
-      { regex: /[ఀ-౿]/, lang: "te-IN", names: ["Google తెలుగు", "female"] },
-      { regex: /[ഀ-ൿ]/, lang: "ml-IN", names: ["Google മലയാളം", "female"] },
-      { regex: /[ಀ-೿]/, lang: "kn-IN", names: ["Google ಕನ್ನಡ", "female"] },
-      { regex: /[઀-૿]/, lang: "gu-IN", names: ["Google ગુજરાતી", "female"] },
-      { regex: /[ঀ-৿]/, lang: "as-IN", names: ["Google অসমীয়া", "female"] },
+      { regex: /[ऀ-ॿ]/, lang: "hi-IN", names: ["Google हिन्दी"] },
+      { regex: /[a-zA-Z]/, lang: "en-US", names: ["Google US English", "Google UK English Female", "zira", "emma"] },
+      { regex: /\b(marathi|tamil|telugu|bengali|punjabi|kannada|gujarati|malayalam|assamese|manipuri|rajasthani|bhojpuri|bihari)\b/i, lang: "hi-IN", names: ["Google हिन्दी"] }
     ];
 
     let matched = false;
@@ -71,24 +91,10 @@ const Chatbot = () => {
         break;
       }
     }
+
     if (!matched) {
-      const femaleEnglishVoices = availableVoices.filter(
-        v =>
-          v.lang.startsWith("en") &&
-          (v.name.toLowerCase().includes("female") ||
-          v.name.toLowerCase().includes("zira") ||   // Microsoft female
-          v.name.toLowerCase().includes("aria") ||   // Microsoft AI female
-          v.name.toLowerCase().includes("susan") ||  // Possible names
-          v.name.toLowerCase().includes("emma") ||   // UK English female
-          v.name.toLowerCase().includes("google uk english female") ||
-          v.name.toLowerCase().includes("google us english")
-          )
-      );
-
-      const fallbackVoiceNames = femaleEnglishVoices.map(v => v.name);
-      speak("en-IN", fallbackVoiceNames.length ? fallbackVoiceNames : ["female"]);
+      speak("en-US", ["Google US English", "Google UK English Female"]);
     }
-
   };
 
   const scrollToBottom = () => {
