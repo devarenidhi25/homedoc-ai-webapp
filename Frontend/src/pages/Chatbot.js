@@ -1,9 +1,10 @@
-"use client"
+// Chatbot.js with dropdown-based multilingual speech input support
+"use client";
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import { useState, useRef, useEffect } from "react"
-import { db, auth } from "../firebase"
-import { collection, addDoc, getDocs, query, where, orderBy, serverTimestamp } from "firebase/firestore"
-import "./Chatbot.css"
+import { useState, useRef, useEffect } from "react";
+import { db, auth } from "../firebase";
+import { collection, addDoc, getDocs, query, where, orderBy, serverTimestamp } from "firebase/firestore";
+import "./Chatbot.css";
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([
@@ -13,38 +14,41 @@ const Chatbot = () => {
       sender: "bot",
       timestamp: new Date(),
     },
-  ])
-  const [inputText, setInputText] = useState("")
-  const [isListening, setIsListening] = useState(false)
-  const [showHistory, setShowHistory] = useState(true)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const messagesEndRef = useRef(null)
-  const fileInputRef = useRef(null)
-  const utteranceRef = useRef(null)
+  ]);
+  const [inputText, setInputText] = useState("");
+  const [isListening, setIsListening] = useState(false);
+  const [selectedLang, setSelectedLang] = useState("en-IN");
   const [availableVoices, setAvailableVoices] = useState([]);
+  const [showHistory, setShowHistory] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const utteranceRef = useRef(null);
+
+  const supportedLanguages = [
+    { label: "English (India)", code: "en-IN" },
+    { label: "Hindi", code: "hi-IN" },
+    { label: "Gujarati", code: "gu-IN" },
+    { label: "Marathi", code: "mr-IN" },
+    { label: "Tamil", code: "ta-IN" },
+    { label: "Telugu", code: "te-IN" },
+    { label: "Kannada", code: "kn-IN" },
+    { label: "Malayalam", code: "ml-IN" },
+    { label: "Punjabi", code: "pa-IN" },
+    { label: "Bengali", code: "bn-IN" },
+    { label: "Urdu", code: "ur-IN" }
+  ];
 
   useEffect(() => {
     const loadVoices = () => {
       const voices = window.speechSynthesis.getVoices();
-      if (voices.length > 0) {
-        console.log("✅ Loaded voices:");
-        voices.forEach(v => {
-          console.log(`${v.name} | ${v.lang}`);
-        });
-        setAvailableVoices(voices);
-      } else {
-        // Retry after short delay if voices not ready yet
-        setTimeout(loadVoices, 200);
-      }
+      if (voices.length > 0) setAvailableVoices(voices);
+      else setTimeout(loadVoices, 200);
     };
-
-    if (typeof window !== "undefined" && window.speechSynthesis) {
-      window.speechSynthesis.onvoiceschanged = loadVoices;
-      loadVoices();
-    }
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+    loadVoices();
   }, []);
 
-  
   const speakText = (text) => {
     const speak = (lang, preferredNames) => {
       if (utteranceRef.current) window.speechSynthesis.cancel();
@@ -76,7 +80,6 @@ const Chatbot = () => {
       window.speechSynthesis.speak(utterance);
     };
 
-    // Voice map
     const voiceMap = [
       { regex: /[ऀ-ॿ]/, lang: "hi-IN", names: ["Google हिन्दी"] },
       { regex: /[a-zA-Z]/, lang: "en-US", names: ["Google US English", "Google UK English Female", "zira", "emma"] },
@@ -97,48 +100,31 @@ const Chatbot = () => {
     }
   };
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })
-  }
+  const formatBotText = (text) => {
+    let html = text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/^\s*\*\s+(.*)/gm, '<li>$1</li>');
 
-  useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+    if (html.includes("<li>")) {
+      html = `<ul>${html}</ul>`;
+    }
+    return html;
+  };
 
-  useEffect(() => {
-    const loadChatHistory = async () => {
-      const user = auth.currentUser;
-      if (!user) return;
-
-      const q = query(
-        collection(db, "chats"),
-        where("uid", "==", user.uid),
-        orderBy("timestamp", "asc")
-      );
-      const snapshot = await getDocs(q);
-      const history = snapshot.docs.map((doc, index) => {
-        const data = doc.data();
-        return [
-          {
-            id: index * 2 + 1,
-            text: data.question,
-            sender: "user",
-            timestamp: data.timestamp?.toDate() || new Date()
-          },
-          {
-            id: index * 2 + 2,
-            text: data.answer,
-            sender: "bot",
-            timestamp: data.timestamp?.toDate() || new Date()
-          }
-        ];
-      }).flat();
-
-      setMessages(history);
-    };
-
-    loadChatHistory();
-  }, []);
+  const getBotResponse = async (userInput) => {
+    try {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_input: userInput })
+      });
+      const data = await res.json();
+      return data.reply || "Sorry, I couldn't understand that.";
+    } catch (err) {
+      console.error("Fetch error:", err);
+      return "Oops! Something went wrong.";
+    }
+  };
 
   const handleSendMessage = async () => {
     if (inputText.trim()) {
@@ -153,12 +139,7 @@ const Chatbot = () => {
 
       setMessages((prev) => [
         ...prev,
-        {
-          id: prev.length + 1,
-          text: inputText,
-          sender: "user",
-          timestamp: new Date(),
-        },
+        userMessage,
         {
           id: prev.length + 2,
           text: botReplyText,
@@ -167,8 +148,7 @@ const Chatbot = () => {
         },
       ]);
 
-      setInputText(""); // ✅ Clear input after messages are updated
-
+      setInputText("");
 
       const user = auth.currentUser;
       if (user) {
@@ -179,144 +159,77 @@ const Chatbot = () => {
           timestamp: serverTimestamp(),
         });
       }
-
-      setInputText("");
     }
   };
-
-  const getBotResponse = async (userInput) => {
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_input: userInput }),
-      });
-      const data = await response.json();
-      return data.reply || "Sorry, I couldn't understand that.";
-    } catch (error) {
-      console.error("Error fetching bot response:", error);
-      return "Oops! Something went wrong. Please try again.";
-    }
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSendMessage()
-    }
-  }
-
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      const fileMessage = {
-        id: messages.length + 1,
-        text: `📄 Uploaded file: ${file.name}`,
-        sender: "user",
-        timestamp: new Date(),
-        isFile: true,
-      }
-      setMessages((prev) => [...prev, fileMessage])
-
-      setTimeout(() => {
-        const analysisResponse = {
-          id: messages.length + 2,
-          text: "I've received your file. Based on the document type, I can provide general insights. For blood reports, I can explain normal ranges and highlight any values that might need attention. For imaging reports, I can help explain medical terminology. Please note that this is for informational purposes only - always consult your healthcare provider for professional medical advice.",
-          sender: "bot",
-          timestamp: new Date(),
-        }
-        setMessages((prev) => [...prev, analysisResponse])
-      }, 1500)
-    }
-  }
-
-  const startVoiceRecognition = () => {
-    if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-      const recognition = new SpeechRecognition()
-
-      recognition.continuous = false
-      recognition.interimResults = false
-      recognition.lang = "en-US"
-
-      setIsListening(true)
-
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript
-        setInputText(transcript)
-        setIsListening(false)
-      }
-
-      recognition.onerror = () => setIsListening(false)
-      recognition.onend = () => setIsListening(false)
-      recognition.start()
-    } else {
-      alert("Speech recognition is not supported in your browser.")
-    }
-  }
-
 
   const pauseSpeech = () => {
     if (window.speechSynthesis.speaking) {
-      window.speechSynthesis.pause()
+      window.speechSynthesis.pause();
     }
-  }
+  };
 
   const resumeSpeech = () => {
     if (window.speechSynthesis.paused) {
-      window.speechSynthesis.resume()
+      window.speechSynthesis.resume();
     }
-  }
+  };
+
+  const startVoiceRecognition = () => {
+    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+      alert("Speech recognition not supported.");
+      return;
+    }
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = selectedLang;
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    setIsListening(true);
+    recognition.start();
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setInputText(transcript);
+      setIsListening(false);
+    };
+
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+  };
 
   return (
     <div className="chatbot-container">
-      {/* Sidebar */}
       <div className={`sidebar ${sidebarOpen ? "open" : ""}`}>
-        <button onClick={() => setShowHistory(prev => !prev)} className="sidebar-btn">
+        <button onClick={() => setShowHistory(!showHistory)} className="sidebar-btn">
           {showHistory ? "Hide History" : "Show History"}
         </button>
       </div>
 
       <div className="chat-header">
-        <button className="hamburger-btn" onClick={() => setSidebarOpen(prev => !prev)}>
-          ☰
-        </button>
+        <button className="hamburger-btn" onClick={() => setSidebarOpen(!sidebarOpen)}>☰</button>
         <h1>HomeDoc AI Chat</h1>
         <p>Your AI Health Assistant</p>
       </div>
 
       <div className="chat-messages">
-        {showHistory && messages.map((message) => (
-          <div key={message.id} className={`message ${message.sender}`}>
+        {showHistory && messages.map(msg => (
+          <div key={msg.id} className={`message ${msg.sender}`}>
             <div className="message-content">
               <div className="message-text">
-                {message.isFile ? (
-                  <span className="file-indicator">{message.text}</span>
-                ) : (
-                  <>
-                    {message.sender === "bot" ? (
-                      <div
-                        dangerouslySetInnerHTML={{
-                          __html: message.text
-                            .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-                            .replace(/\n/g, "<br/>")
-                        }}
-                      />
-                    ) : (
-                      message.text
-                    )}
-                    {message.sender === "bot" && (
-                      <span style={{ marginLeft: "10px" }}>
-                        <button onClick={() => speakText(message.text)} title="Read aloud">🔊</button>
-                        <button onClick={resumeSpeech} title="Resume speech">▶️</button>
-                        <button onClick={pauseSpeech} title="Pause speech">⏸️</button>
-                      </span>
-                    )}
-                  </>
+                {msg.sender === "bot"
+                  ? <div dangerouslySetInnerHTML={{ __html: formatBotText(msg.text) }} />
+                  : msg.text}
+                {msg.sender === "bot" && (
+                  <span style={{ marginLeft: "10px" }}>
+                    <button onClick={() => speakText(msg.text)}>🔊</button>
+                    <button onClick={resumeSpeech} title="Resume speech">▶️</button>
+                    <button onClick={pauseSpeech} title="Pause speech">⏸️</button>
+                  </span>
                 )}
               </div>
               <div className="message-time">
-                {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                {msg.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
               </div>
             </div>
           </div>
@@ -326,31 +239,24 @@ const Chatbot = () => {
 
       <div className="chat-input-container">
         <div className="input-wrapper">
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileUpload}
-            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-            style={{ display: "none" }}
-          />
-          <button className="file-upload-btn" title="Upload file" onClick={() => fileInputRef.current.click()}>
-            <i className="fas fa-paperclip"></i>
-          </button>
+          <div className="lang-dropdown-container">
+            <label htmlFor="lang-select" className="lang-label">Select a language to speak in:</label>
+            <select id="lang-select" className="lang-select small-dropdown" value={selectedLang} onChange={(e) => setSelectedLang(e.target.value)}>
+              {supportedLanguages.map((lang) => (
+                <option key={lang.code} value={lang.code}>{lang.label}</option>
+              ))}
+            </select>
+          </div>
 
           <textarea
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Type your health question or describe your symptoms..."
+            placeholder="Ask something..."
             className="chat-input"
             rows="1"
           />
 
-          <button
-            className={`mic-btn ${isListening ? "listening" : ""}`}
-            onClick={startVoiceRecognition}
-            title="Voice input"
-          >
+          <button className={`mic-btn ${isListening ? "listening" : ""}`} onClick={startVoiceRecognition}>
             <i className="fas fa-microphone"></i>
           </button>
 
@@ -360,7 +266,7 @@ const Chatbot = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Chatbot
+export default Chatbot;
