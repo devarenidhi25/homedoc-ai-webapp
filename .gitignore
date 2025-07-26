@@ -3,3 +3,5 @@ node_modules/
 *.pack
 .env
 .env
+__pycache__/
+*.pyc
