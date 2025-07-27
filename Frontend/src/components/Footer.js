@@ -94,10 +94,10 @@ const Footer = () => {
             <li><a href="/report-scanner">Report Scanner</a></li>
             <li><a href="/chatbot">AI Chat</a></li>
           </ul>
-          <div className="contact-info">
+          {/* <div className="contact-info">
             <h4>Get in Touch</h4>
             <p>📧 support@homedocai.com</p>
-          </div>
+          </div> */}
         </div>
       </div>
 
