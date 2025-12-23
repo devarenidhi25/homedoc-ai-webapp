@@ -7,6 +7,9 @@ from collections import OrderedDict
 from fastapi import UploadFile, File
 from fastapi.responses import JSONResponse
 from services import report_interpreter
+from fastapi import UploadFile, File, HTTPException
+from services.image_diagnosis import predict_image
+
 import json
 import tempfile
 import os
@@ -118,3 +121,16 @@ async def interpret_report(file: UploadFile = File(...)):
 
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
+    
+@app.post("/predict-image")
+async def predict_medical_image(file: UploadFile = File(...)):
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Invalid image file")
+
+    image_bytes = await file.read()
+
+    try:
+        result = predict_image(image_bytes)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
