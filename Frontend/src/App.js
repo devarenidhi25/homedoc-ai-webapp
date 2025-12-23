@@ -6,6 +6,7 @@ import Home from "./pages/Home";
 import Chatbot from "./pages/Chatbot";
 import Predictor from "./pages/Predictor";
 import ReportScanner from "./pages/ReportScanner";
+import XRayClassifier from "./pages/XRayClassifier";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import UserProfile from "./components/UserProfile"; // ✅ NEW
@@ -24,6 +25,7 @@ function App() {
                 <Route path="/chatbot" element={<Chatbot />} />
                 <Route path="/predictor" element={<Predictor />} />
                 <Route path="/report-scanner" element={<ReportScanner />} />
+                <Route path="/xray-classifier" element={<XRayClassifier />} />
                 <Route path="/signin" element={<SignIn />} />
                 <Route path="/signup" element={<SignUp />} />
                 <Route path="/profile" element={<UserProfile />} /> {/* ✅ NEW */}
