@@ -61,7 +61,9 @@ const ImageUpload = ({ onImageSelect, imagePreview, loading, onPredict }) => {
           onDrop={handleDrop}
         >
           <div className="upload-content">
-            <div className="upload-icon">📸</div>
+            <div className="upload-icon">
+                <i className="fas fa-cloud-upload-alt"></i>
+            </div>
             <h3>Upload Medical Image</h3>
             <p>Drag and drop your X-ray, MRI, or medical image here</p>
             <p className="upload-hint">or</p>
