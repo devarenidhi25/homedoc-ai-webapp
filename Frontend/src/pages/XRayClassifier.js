@@ -32,7 +32,7 @@ const XRayClassifier = () => {
       const formData = new FormData()
       formData.append("file", imageFile)
 
-      const response = await fetch("http://localhost:8000/api/predict-image", {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/predict-image`, {
         method: "POST",
         body: formData,
       })
