@@ -52,6 +52,12 @@ const Home = () => {
               <p>Chat with AI for remedies and medical report analysis</p>
               <div className="card-arrow">→</div>
             </Link>
+            <Link to="/xray-classifier" className="feature-card">
+              <div className="card-icon">📷</div>
+              <h3>X Ray Image Classifier</h3>
+              <p>Upload and analyze X Ray images with AI-powered classification</p>
+              <div className="card-arrow">→</div>
+            </Link>
           </div>
         </div>
       </section>
