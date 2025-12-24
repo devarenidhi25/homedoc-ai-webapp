@@ -20,10 +20,10 @@ const Home = () => {
             <h1 className="hero-title">
               Your Personal <span className="gradient-text">AI Health</span> Assistant
             </h1>
-            <p className="hero-description">
+            {/* <p className="hero-description">
               Get instant medical insights, disease predictions, and personalized health advice powered by advanced AI
               technology. Your health, simplified.
-            </p>
+            </p> */}
           </div>
 
           <div className="feature-cards">
